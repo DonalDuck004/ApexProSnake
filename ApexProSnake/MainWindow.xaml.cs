@@ -13,11 +13,14 @@ namespace ApexProSnake
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const int CEILS = 32 * 10;
+
         private Random random = new();
         private Gamesense.Gamesense gamesense = new();
         private SnakeBlock food;
         private int cycle = 1;
         private byte[] image_buff = new byte[128 * 40 / 8];
+        // ^ BW compression uses 1 bit for each pixel.
 
         public MainWindow()
         {
@@ -37,6 +40,9 @@ namespace ApexProSnake
                     Grid.SetRow(ceil, i);
                 }
             }
+            // Dropping this part will reduce memory usage of around 40mb
+            // And then we will be able to optimizing game grid children with capacity property
+            // Another improvment is considering to switch to a canvas gameplain, but nah
 
             this.SpawnFood();
             this.game_grid.Children.Add(SnakeBlock.HEAD.Ceil);
@@ -46,11 +52,14 @@ namespace ApexProSnake
         private (int X, int Y) GetEmptyCeil()
         {
             var not_free = SnakeBlock.GetCoords();
+            var free_hint = MainWindow.CEILS - not_free.Count;
+            if (free_hint <= 0)
+                return (0, 0); // todo handle full map
 
-            var x = (from ceil in this.game_grid.Children.OfType<Rectangle>()
+            var x = from ceil in this.game_grid.Children.OfType<Rectangle>()
                     let coords = (Grid.GetColumn(ceil), Grid.GetRow(ceil))
-                    where !not_free.Contains(coords) select coords).ToArray();
-            return x[this.random.Next(0, x.Length)];
+                    where !not_free.Contains(coords) select coords;
+            return x.Skip(this.random.Next(free_hint - 1)).First();
         }
 
         private void SpawnFood()
