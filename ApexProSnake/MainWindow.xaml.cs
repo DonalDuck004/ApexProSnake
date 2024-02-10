@@ -1,8 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
+﻿
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -28,12 +24,13 @@ namespace ApexProSnake
             InitializeComponent();
 
             Rectangle ceil;
+            var Fill = new SolidColorBrush(Colors.Black);
 
             for (var i = 0; i < this.game_grid.RowDefinitions.Count; i++){
                 for (var j = 0; j < this.game_grid.ColumnDefinitions.Count; j++) {
                     ceil = new()
                     {
-                        Fill = new SolidColorBrush(Colors.Black)
+                        Fill = Fill
                     };
                     this.game_grid.Children.Add(ceil);
                     Grid.SetColumn(ceil, j);
