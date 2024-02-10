@@ -84,8 +84,7 @@ namespace ApexProSnake
             {
                 var tail = SnakeBlock.TAIL;
                 var tail_flow = direction.Value;
-                tail.Previus = this.food;
-                this.food.Next = tail;
+
 
                 if (tail.Next is not null) {
                     var next_pos = tail.Next.Position;
@@ -145,11 +144,16 @@ namespace ApexProSnake
                     final_y = 0;
                 }
 
-                if (final_x != -1 && final_x != 32 && final_y != -1 && final_y != 10)
-                { // TODO take a desition for handle this cases... Gameover screen?
+                if (final_x != -1 && final_x != 32 && final_y != -1 && final_y != 10){
                     Grid.SetRow(this.food.Ceil, final_y);
                     Grid.SetColumn(this.food.Ceil, final_x);
+
+                    tail.Previus = this.food;
+                    this.food.Next = tail;
                 }
+                else
+                    this.game_grid.Children.Remove(this.food.Ceil);
+                // There is no gameover screen
 
                 this.SpawnFood();
             }
@@ -261,7 +265,6 @@ namespace ApexProSnake
             };
             
             this.gamesense.GameEvent(game_event);
-
 
             if (++this.cycle == 101)
                 this.cycle = 1;
