@@ -1,16 +1,13 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Mime;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using static System.Net.WebRequestMethods;
 
 
 namespace ApexProSnake
@@ -25,6 +22,7 @@ namespace ApexProSnake
         private SnakeBlock food;
         private HttpClient client = new();
         private int cycle = 1;
+        private byte[] image_buff = new byte[128 * 40 / 8];
 
         public MainWindow()
         {
@@ -90,11 +88,6 @@ namespace ApexProSnake
                 return;
 
             SnakeBlock.HEAD.Move(direction.Value);
-            if (this.food is null)
-            {
-                this.SpawnFood();
-                return;
-            }
 
             if (this.food.Position == SnakeBlock.HEAD.Position)
             {
@@ -162,7 +155,7 @@ namespace ApexProSnake
                 }
 
                 if (final_x != -1 && final_x != 32 && final_y != -1 && final_y != 10)
-                {
+                { // TODO take a desition for handle this cases... Gameover screen?
                     Grid.SetRow(this.food.Ceil, final_y);
                     Grid.SetColumn(this.food.Ceil, final_x);
                 }
@@ -228,43 +221,60 @@ namespace ApexProSnake
             };
 
             this.client.Send(msg);
+
+            this.SendToKeyboard();
         }
 
-        private void SendToKeyboard()
+        private unsafe void SendToKeyboard()
         {
-            RenderTargetBitmap target = new(128, 40, 96, 96, PixelFormats.Pbgra32);
-            target.Render(this.game_grid);
-            var encoder = new BmpBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(target));
+            Array.Clear(this.image_buff);
 
-            var bytes = new byte[128 * 40 / 8];
+            SnakeBlock? block = SnakeBlock.HEAD;
+            Debug.Assert(block is not null);
+            byte b1, b2, b3, b4;
+            int idx1, idx2, idx3, idx4, row;
+            (int X, int Y) pos;
 
-
-            using (var stream = new MemoryStream())//new FileStream("a", FileMode.OpenOrCreate, FileAccess.Write))
+            do
             {
-                encoder.Save(stream);
-                var bitmap = new System.Drawing.Bitmap(stream);
-                var filler = 0;
-                for (int i = 0; i < 40; i++)
-                {
-                    for (int j = 0; j < 16; j++)
-                    {
-                        byte tmp = 0;
-                        for (int k = 0; k < 8; k++)
-                        {
-                            var pixel = bitmap.GetPixel(j * 8 + k, i);
-                            var gray = (pixel.R + pixel.G + pixel.B) / 3;
-                            if (gray == 0)
-                                continue;
+                pos = block.Position;
+                pos.Y *= 4;
+                pos.X *= 4;
+                
+                b1 = (byte)(1 << (7 - (pos.X  % 8)));
+                b2 = (byte)(1 << (7 - ((pos.X + 1) % 8)));
+                b3 = (byte)(1 << (7 - ((pos.X + 2) % 8)));
+                b4 = (byte)(1 << (7 - ((pos.X + 3) % 8)));
 
-                            tmp += (byte)(1 << (7 - k));
-                        }
-                        bytes[filler++] = tmp;
-                    }
-                }
-                stream.Dispose();
-                bitmap.Dispose();
-            }
+                row = pos.Y * 16;
+                idx1 = pos.X / 8 + row;
+                idx2 = ((pos.X + 1) / 8) + row;
+                idx3 = ((pos.X + 2) / 8) + row;
+                idx4 = ((pos.X + 3) / 8) + row;
+
+                this.image_buff[idx1] |= b1;
+                this.image_buff[idx2] |= b2;
+                this.image_buff[idx3] |= b3;
+                this.image_buff[idx4] |= b4;
+
+                this.image_buff[idx1 + 16] |= b1;
+                this.image_buff[idx2 + 16] |= b2;
+                this.image_buff[idx3 + 16] |= b3;
+                this.image_buff[idx4 + 16] |= b4;
+
+                this.image_buff[idx1 + 32] |= b1;
+                this.image_buff[idx2 + 32] |= b2;
+                this.image_buff[idx3 + 32] |= b3;
+                this.image_buff[idx4 + 32] |= b4;
+
+                this.image_buff[idx1 + 48] |= b1;
+                this.image_buff[idx2 + 48] |= b2;
+                this.image_buff[idx3 + 48] |= b3;
+                this.image_buff[idx4 + 48] |= b4;
+
+                block = block.Previus;
+            } while (block is not null);
+
             var request = new Dictionary<string, object>()
             {
                 { "game", "DD004SNAKE" },
@@ -272,9 +282,9 @@ namespace ApexProSnake
                 { "data", new Dictionary<string, object>()
                     {
                         { "value", this.cycle },
-                        { "frame",  new Dictionary<string, object>()
+                        { "frame",  new Dictionary<string, IEnumerable<byte>>() // byte[] while cause b64 encode
                             {
-                             {"image-data-128x40", bytes.Select(x => (int)x).ToArray()}
+                             {"image-data-128x40", this.image_buff}
                             }
                         },
 
