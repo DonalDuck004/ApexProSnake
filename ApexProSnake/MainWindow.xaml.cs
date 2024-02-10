@@ -9,7 +9,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-
 namespace ApexProSnake
 {
 
@@ -19,8 +18,8 @@ namespace ApexProSnake
     public partial class MainWindow : Window
     {
         private Random random = new();
+        private Gamesense.Gamesense gamesense = new();
         private SnakeBlock food;
-        private HttpClient client = new();
         private int cycle = 1;
         private byte[] image_buff = new byte[128 * 40 / 8];
 
@@ -44,11 +43,6 @@ namespace ApexProSnake
 
             this.SpawnFood();
             this.game_grid.Children.Add(SnakeBlock.HEAD.Ceil);
-            HttpClient.DefaultProxy = new WebProxy
-            {
-                Address = new Uri("http://localhost:8000"),
-            };
-
             this.BootstrapSteelseriesGG();
         }
 
@@ -167,60 +161,36 @@ namespace ApexProSnake
 
         private void BootstrapSteelseriesGG()
         {
-            var request = new Dictionary<string, object>()
-            {
-                { "game", "DD004SNAKE" },
-                { "game_display_name", "DD004-Snake" },
-                { "developer", "DonalDuck004"}
+            var meta = new Gamesense.GameMetadata() { 
+                Game = "DD004SNAKE", 
+                GameDisplayName = "DD004-Snake",
+                Developer = "DonalDuck004"
             };
-            var serialized = JsonSerializer.Serialize(request);
-            var msg = new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1:60281/game_metadata");
-            msg.Content = new StringContent(serialized)
-            {
-                Headers =
-                {
-                    ContentType = new MediaTypeHeaderValue("application/json")
-                }
-            };
+            this.gamesense.GameMetadata(meta);
 
-            this.client.Send(msg);
-            request = new Dictionary<string, object>()
+            var bind_game_event = new Gamesense.BindGameEvent<Gamesense.BindGameEventHandlerDataDisplay>()
             {
-                { "game", "DD004SNAKE" },
-                { "event", "DISPLAY" },
-                { "min_value", 0 },
-                { "max_value", 100 },
-                { "icon_id", null },
-                { "handlers", new object[]{
-                    new Dictionary<string, object>()
+                Game = "DD004SNAKE",
+                Event = "DISPLAY",
+                Handlers = new []{
+                    new Gamesense.BindGameEventHandler<Gamesense.BindGameEventHandlerDataDisplay>()
                     {
-                        { "datas", new object[] {
-                            new Dictionary<string, object>()
+                        Datas = new[]
+                        {
+                            new Gamesense.BindGameEventHandlerDataDisplay()
                             {
-                                { "has-text", false },
-                                { "image-data", new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
-                            }
-
+                                HasText = false,
+                                ImageData = this.image_buff
                             }
                         },
-                        { "device-type",  "screened-128x40" },
-                        { "mode",  "screen" },
-                        { "zone",  "one" },
+                        DeviceType = "screened-128x40",
+                        Mode = "screen",
+                        Zone = "one",
                     }
-                } },
-                { "data_fields", new object[0] }
-            };
-            serialized = JsonSerializer.Serialize(request);
-            msg = new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1:60281/bind_game_event");
-            msg.Content = new StringContent(serialized)
-            {
-                Headers =
-                {
-                    ContentType = new MediaTypeHeaderValue("application/json")
                 }
             };
+            this.gamesense.BindGameEvent(bind_game_event);
 
-            this.client.Send(msg);
 
             this.SendToKeyboard();
         }
@@ -229,8 +199,7 @@ namespace ApexProSnake
         {
             Array.Clear(this.image_buff);
 
-            SnakeBlock? block = SnakeBlock.HEAD;
-            Debug.Assert(block is not null);
+            var block = SnakeBlock.HEAD;
             byte b1, b2, b3, b4;
             int idx1, idx2, idx3, idx4, row;
             (int X, int Y) pos;
@@ -272,37 +241,29 @@ namespace ApexProSnake
                 this.image_buff[idx3 + 48] |= b3;
                 this.image_buff[idx4 + 48] |= b4;
 
-                block = block.Previus;
+                if (block.Previus is null && !object.ReferenceEquals(block, this.food))
+                    block = this.food; // force food printing
+                else
+                    block = block.Previus;
+
+
             } while (block is not null);
 
-            var request = new Dictionary<string, object>()
+            var game_event = new Gamesense.GameEvent<Gamesense.GameEventDisplayData>()
             {
-                { "game", "DD004SNAKE" },
-                { "event", "DISPLAY" },
-                { "data", new Dictionary<string, object>()
-                    {
-                        { "value", this.cycle },
-                        { "frame",  new Dictionary<string, IEnumerable<byte>>() // byte[] while cause b64 encode
-                            {
-                             {"image-data-128x40", this.image_buff}
-                            }
-                        },
-
-                    }
-                },
-
-            };
-            var serialized = JsonSerializer.Serialize(request);
-            var msg = new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1:60281/game_event");
-            msg.Content = new StringContent(serialized)
-            {
-                Headers =
+                Game = "DD004SNAKE",
+                Event = "DISPLAY",
+                Data = new Gamesense.GameEventDisplayData()
                 {
-                    ContentType = new MediaTypeHeaderValue("application/json")
+                    Value = this.cycle,
+                    Frame = new Dictionary<string, IEnumerable<byte>>()
+                    {
+                        { "image-data-128x40", this.image_buff }
+                    }
                 }
             };
-
-            var response = this.client.Send(msg);
+            
+            this.gamesense.GameEvent(game_event);
 
 
             if (++this.cycle == 101)
