@@ -9,8 +9,4 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="8.0.1" />
-  </ItemGroup>
-
 </Project>
